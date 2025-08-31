@@ -1,14 +1,20 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
-import { STATIC_CREDS } from '../creds/creds.config';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AuthService {
-  constructor(private jwt: JwtService) {}
+  constructor(
+    private jwt: JwtService,
+    private config: ConfigService,
+  ) {}
 
   async validate(username: string, password: string) {
-    const hash = STATIC_CREDS[username];
+    const envUser = this.config.get<string>('USER');
+    const envPass = this.config.get<string>('PASS');
+    if (username !== envUser) return null;
+    const hash = envPass;
     if (!hash) throw new UnauthorizedException('Invalid credentials');
     const ok = await bcrypt.compare(password, hash);
     if (!ok) throw new UnauthorizedException('Invalid credentials');
