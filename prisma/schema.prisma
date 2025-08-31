@@ -1,0 +1,99 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model account_snapshots {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  account_id    String   @db.Uuid
+  as_of_date    DateTime @db.Date
+  balance_minor BigInt
+  base_currency String   @db.Char(3)
+  created_at    DateTime @default(now()) @db.Timestamptz(6)
+  accounts      accounts @relation(fields: [account_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([account_id, as_of_date])
+}
+
+model accounts {
+  id                 String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  institution_id     String?             @db.Uuid
+  name               String
+  kind               account_kind
+  type               String?
+  base_currency      String              @db.Char(3)
+  number_full        String?
+  number_masked      String?
+  credit_limit_minor BigInt?
+  balance_minor      BigInt              @default(0)
+  status             String              @default("active")
+  meta               Json                @default("{}")
+  created_at         DateTime            @default(now()) @db.Timestamptz(6)
+  updated_at         DateTime            @default(now()) @db.Timestamptz(6)
+  account_snapshots  account_snapshots[]
+  institutions       institutions?       @relation(fields: [institution_id], references: [id], onUpdate: NoAction)
+  transaction_lines  transaction_lines[]
+
+  @@index([base_currency], map: "idx_accounts_currency")
+  @@index([kind], map: "idx_accounts_kind")
+}
+
+model institutions {
+  id         String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name       String
+  kind       String?
+  logo_url   String?
+  created_at DateTime   @default(now()) @db.Timestamptz(6)
+  accounts   accounts[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model transaction_lines {
+  id             String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  transaction_id String         @db.Uuid
+  account_id     String         @db.Uuid
+  direction      line_direction
+  amount_minor   BigInt
+  note           String?
+  created_at     DateTime       @default(now()) @db.Timestamptz(6)
+  accounts       accounts       @relation(fields: [account_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  transactions   transactions   @relation(fields: [transaction_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([account_id], map: "idx_lines_acct")
+  @@index([transaction_id], map: "idx_lines_txn")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model transactions {
+  id                                                        String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  date                                                      DateTime            @default(now()) @db.Timestamptz(6)
+  kind                                                      String
+  description                                               String?
+  tags                                                      String[]            @default([])
+  meta                                                      Json                @default("{}")
+  reversal_of                                               String?             @db.Uuid
+  reversed_by                                               String?             @db.Uuid
+  created_at                                                DateTime            @default(now()) @db.Timestamptz(6)
+  transaction_lines                                         transaction_lines[]
+  transactions_transactions_reversal_ofTotransactions       transactions?       @relation("transactions_reversal_ofTotransactions", fields: [reversal_of], references: [id], onUpdate: NoAction)
+  other_transactions_transactions_reversal_ofTotransactions transactions[]      @relation("transactions_reversal_ofTotransactions")
+  transactions_transactions_reversed_byTotransactions       transactions?       @relation("transactions_reversed_byTotransactions", fields: [reversed_by], references: [id], onUpdate: NoAction)
+  other_transactions_transactions_reversed_byTotransactions transactions[]      @relation("transactions_reversed_byTotransactions")
+
+  @@index([date(sort: Desc)], map: "idx_txn_date")
+}
+
+enum account_kind {
+  asset
+  liability
+}
+
+enum line_direction {
+  debit
+  credit
+}
