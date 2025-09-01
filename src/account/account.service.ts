@@ -1,14 +1,16 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { UpdateAccountDto } from './dto/update-account.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { LineService } from 'src/line/line.service';
+import { TransactionService } from 'src/transaction/transaction.service';
 
 @Injectable()
 export class AccountService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly lineService: LineService,
+    private readonly transactionService: TransactionService,
   ) {}
 
   private maskNumber(full: string): string {
@@ -63,6 +65,10 @@ export class AccountService {
   }
 
   async update(id: string, dto: UpdateAccountDto) {
+    const row = await this.prisma.accounts.findUnique({ where: { id } });
+    if (!row) {
+      throw new BadRequestException(`Account with id ${id} not found.`);
+    }
     const data: any = {};
     if (dto.institution_id !== undefined)
       data.institution_id = dto.institution_id;
@@ -70,14 +76,33 @@ export class AccountService {
     if (dto.kind !== undefined) data.kind = dto.kind;
     if (dto.type !== undefined) data.type = dto.type;
     if (dto.base_currency !== undefined) data.base_currency = dto.base_currency;
-    if (dto.number_full !== undefined) {
+    if (!dto.number_full) {
       data.number_full = dto.number_full;
       data.number_masked = this.maskNumber(dto.number_full);
     }
     if (dto.credit_limit_minor !== undefined)
       data.credit_limit_minor = BigInt(dto.credit_limit_minor);
-    if (dto.balance_minor !== undefined)
-      data.balance_minor = BigInt(dto.balance_minor);
+    if (dto.balance_minor !== undefined) {
+      const currentBalance = await this.calculateBalance(id);
+      if (dto.balance_minor != currentBalance) {
+        const delta = Number(dto.balance_minor) - currentBalance;
+        if (delta < 0) {
+          await this.transactionService.create({
+            kind: 'adjustment',
+            account_from: id,
+            amount_minor: Math.abs(delta),
+            description: 'Balance decreased adjustment',
+          });
+        } else if (delta > 0) {
+          await this.transactionService.create({
+            kind: 'adjustment',
+            account_to: id,
+            amount_minor: delta,
+            description: 'Balance increased adjustment',
+          });
+        }
+      }
+    }
     if (dto.status !== undefined) data.status = dto.status;
     if (dto.meta !== undefined) data.meta = dto.meta;
 
