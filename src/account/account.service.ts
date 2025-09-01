@@ -59,14 +59,18 @@ export class AccountService {
 
     return this.prisma.accounts.create({
       data: {
-        institution_id: this.isBlank(institution_id) ? undefined : (institution_id as string),
+        institution_id: this.isBlank(institution_id)
+          ? undefined
+          : (institution_id as string),
         name: this.isBlank(name) ? '' : (name as string),
         kind,
         type: this.isBlank(type) ? undefined : (type as any),
         base_currency,
         number_full,
         number_masked,
-        credit_limit_minor: this.isBlank(credit_limit_minor) ? undefined : (credit_limit_minor as any),
+        credit_limit_minor: this.isBlank(credit_limit_minor)
+          ? undefined
+          : (credit_limit_minor as any),
         balance_minor: balance_minor,
         status: this.isBlank(status) ? undefined : (status as string),
         meta: this.isBlank(meta) ? undefined : (meta as any),
@@ -134,7 +138,8 @@ export class AccountService {
         }
       }
     }
-    if (dto.status !== undefined && !this.isBlank(dto.status)) data.status = dto.status;
+    if (dto.status !== undefined && !this.isBlank(dto.status))
+      data.status = dto.status;
     if (dto.meta !== undefined && !this.isBlank(dto.meta)) data.meta = dto.meta;
 
     return this.prisma.accounts.update({ where: { id }, data });
@@ -165,7 +170,7 @@ export class AccountService {
     let credit = 0;
     for (const line of lines) {
       const amt = Number((line as any).amount_minor as bigint);
-      if (line.direction === 'debit') debit -= amt;
+      if (line.direction === 'debit') debit += amt;
       else credit += amt;
     }
 
