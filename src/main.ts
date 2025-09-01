@@ -22,7 +22,6 @@ async function bootstrap() {
   // after creating app
   const prisma = app.get(PrismaService);
   app.enableShutdownHooks();
-  app.enableCors();
 
   await app.listen(3001);
 }

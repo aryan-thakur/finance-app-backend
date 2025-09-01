@@ -19,6 +19,14 @@ export class AccountService {
     return maskedPrefix + last4;
   }
 
+  private isBlank(value: unknown): boolean {
+    return (
+      value === undefined ||
+      value === null ||
+      (typeof value === 'string' && value.trim() === '')
+    );
+  }
+
   async create(dto: CreateAccountDto) {
     const {
       institution_id,
@@ -33,21 +41,35 @@ export class AccountService {
       meta,
     } = dto;
 
+    // Validate compulsory fields are present and non-empty
+    if (this.isBlank(kind as any)) {
+      throw new BadRequestException('kind is required');
+    }
+    if (this.isBlank(base_currency)) {
+      throw new BadRequestException('base_currency is required');
+    }
+    if (this.isBlank(number_full)) {
+      throw new BadRequestException('number_full is required');
+    }
+    if (balance_minor === undefined || balance_minor === null) {
+      throw new BadRequestException('balance_minor is required');
+    }
+
     const number_masked = this.maskNumber(number_full);
 
     return this.prisma.accounts.create({
       data: {
-        institution_id: institution_id ?? undefined,
-        name: name ?? '',
+        institution_id: this.isBlank(institution_id) ? undefined : (institution_id as string),
+        name: this.isBlank(name) ? '' : (name as string),
         kind,
-        type: type ?? undefined,
+        type: this.isBlank(type) ? undefined : (type as any),
         base_currency,
         number_full,
         number_masked,
-        credit_limit_minor: credit_limit_minor,
+        credit_limit_minor: this.isBlank(credit_limit_minor) ? undefined : (credit_limit_minor as any),
         balance_minor: balance_minor,
-        status: status ?? undefined,
-        meta: meta ?? undefined,
+        status: this.isBlank(status) ? undefined : (status as string),
+        meta: this.isBlank(meta) ? undefined : (meta as any),
       },
     });
   }
@@ -70,21 +92,30 @@ export class AccountService {
       throw new BadRequestException(`Account with id ${id} not found.`);
     }
     const data: any = {};
-    if (dto.institution_id !== undefined)
+    if (dto.institution_id !== undefined && !this.isBlank(dto.institution_id))
       data.institution_id = dto.institution_id;
-    if (dto.name !== undefined) data.name = dto.name;
-    if (dto.kind !== undefined) data.kind = dto.kind;
-    if (dto.type !== undefined) data.type = dto.type;
-    if (dto.base_currency !== undefined) data.base_currency = dto.base_currency;
-    if (!dto.number_full) {
-      data.number_full = dto.number_full;
-      data.number_masked = this.maskNumber(dto.number_full);
+    if (dto.name !== undefined && !this.isBlank(dto.name)) data.name = dto.name;
+    if (dto.kind !== undefined && !this.isBlank(dto.kind)) data.kind = dto.kind;
+    if (dto.type !== undefined && !this.isBlank(dto.type)) data.type = dto.type;
+    if (dto.base_currency !== undefined && !this.isBlank(dto.base_currency))
+      data.base_currency = dto.base_currency;
+    if (dto.number_full !== undefined && !this.isBlank(dto.number_full)) {
+      data.number_full = dto.number_full as any;
+      data.number_masked = this.maskNumber(dto.number_full as any);
     }
-    if (dto.credit_limit_minor !== undefined)
-      data.credit_limit_minor = BigInt(dto.credit_limit_minor);
-    if (dto.balance_minor !== undefined) {
+    if (
+      dto.credit_limit_minor !== undefined &&
+      dto.credit_limit_minor !== null &&
+      Number.isFinite(Number(dto.credit_limit_minor))
+    )
+      data.credit_limit_minor = BigInt(dto.credit_limit_minor as any);
+    if (
+      dto.balance_minor !== undefined &&
+      dto.balance_minor !== null &&
+      Number.isFinite(Number(dto.balance_minor))
+    ) {
       const currentBalance = await this.calculateBalance(id);
-      if (dto.balance_minor != currentBalance) {
+      if (Number(dto.balance_minor) != currentBalance) {
         const delta = Number(dto.balance_minor) - currentBalance;
         if (delta < 0) {
           await this.transactionService.create({
@@ -103,8 +134,8 @@ export class AccountService {
         }
       }
     }
-    if (dto.status !== undefined) data.status = dto.status;
-    if (dto.meta !== undefined) data.meta = dto.meta;
+    if (dto.status !== undefined && !this.isBlank(dto.status)) data.status = dto.status;
+    if (dto.meta !== undefined && !this.isBlank(dto.meta)) data.meta = dto.meta;
 
     return this.prisma.accounts.update({ where: { id }, data });
   }
