@@ -115,9 +115,9 @@ export class AccountService {
 
     if (kind === 'liability') {
       // For liabilities: debit decreases, credit increases
-      return opening - debit + credit;
+      return opening + debit - credit;
     }
     // For assets: debit increases, credit decreases
-    return opening + debit - credit;
+    return opening - debit + credit;
   }
 }
