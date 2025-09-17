@@ -9,6 +9,7 @@ import {
   UseGuards,
   Query,
   ParseIntPipe,
+  Req,
 } from '@nestjs/common';
 import { TransactionService } from './transaction.service';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
@@ -21,44 +22,46 @@ export class TransactionController {
   constructor(private readonly transactionService: TransactionService) {}
 
   @Post()
-  create(@Body() createTransactionDto: CreateTransactionDto) {
-    return this.transactionService.create(createTransactionDto);
+  create(@Req() req, @Body() createTransactionDto: CreateTransactionDto) {
+    return this.transactionService.create(createTransactionDto, req.user.userId);
   }
 
   @Get()
-  findAll() {
-    return this.transactionService.findAll();
+  findAll(@Req() req) {
+    return this.transactionService.findAll(req.user.userId);
   }
 
   @Get('range')
   findRange(
     @Query('lower', new ParseIntPipe()) lower: number,
     @Query('upper', new ParseIntPipe()) upper: number,
+    @Req() req,
   ) {
-    return this.transactionService.findRange(lower, upper);
+    return this.transactionService.findRange(lower, upper, req.user.userId);
   }
 
   @Get('count')
-  count() {
-    return this.transactionService.countAll();
+  count(@Req() req) {
+    return this.transactionService.countAll(req.user.userId);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.transactionService.findOne(id);
+  findOne(@Param('id') id: string, @Req() req) {
+    return this.transactionService.findOne(id, req.user.userId);
   }
 
   @Patch(':id')
   update(
     @Param('id') id: string,
     @Body() updateTransactionDto: UpdateTransactionDto,
+    @Req() req,
   ) {
-    return this.transactionService.update(id, updateTransactionDto);
+    return this.transactionService.update(id, updateTransactionDto, req.user.userId);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
+  remove(@Param('id') id: string, @Req() req) {
     // Soft-delete behavior: reverse the transaction instead of deleting
-    return this.transactionService.reverseTransaction(id);
+    return this.transactionService.reverseTransaction(id, req.user.userId);
   }
 }

@@ -6,6 +6,16 @@ datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
+  
+}
+
+model user_metadata {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId       String   @map("user_id") @db.Uuid
+  baseCurrency String   @map("base_currency") @db.Char(3)
+  createdAt    DateTime @default(now()) @db.Timestamptz(6)
+
+  @@map("user_metadata")
 }
 
 model account_snapshots {
@@ -35,6 +45,7 @@ model accounts {
   meta               Json                @default("{}")
   created_at         DateTime            @default(now()) @db.Timestamptz(6)
   updated_at         DateTime            @default(now()) @db.Timestamptz(6)
+  user_id            String              @db.Uuid
   account_snapshots  account_snapshots[]
   institutions       institutions?       @relation(fields: [institution_id], references: [id], onUpdate: NoAction)
   transaction_lines  transaction_lines[]
@@ -79,6 +90,7 @@ model transactions {
   reversal_of                                               String?             @db.Uuid
   reversed_by                                               String?             @db.Uuid
   created_at                                                DateTime            @default(now()) @db.Timestamptz(6)
+  user_id                                                   String              @db.Uuid
   transaction_lines                                         transaction_lines[]
   transactions_transactions_reversal_ofTotransactions       transactions?       @relation("transactions_reversal_ofTotransactions", fields: [reversal_of], references: [id], onUpdate: NoAction)
   other_transactions_transactions_reversal_ofTotransactions transactions[]      @relation("transactions_reversal_ofTotransactions")

@@ -12,7 +12,7 @@ export class TransactionService {
     private readonly lineService: LineService,
   ) {}
 
-  async create(dto: CreateTransactionDto) {
+  async create(dto: CreateTransactionDto, userId: string) {
     const { account_from, account_to, amount_minor, ...txnFields } = dto as any;
 
     // If amount is provided and is zero, reject the request
@@ -38,6 +38,7 @@ export class TransactionService {
         tags: txnFields.tags ?? undefined,
         meta: txnFields.meta ?? undefined,
         reversal_of: txnFields.reversal_of ?? undefined,
+        user_id: userId,
       },
     });
 
@@ -88,8 +89,10 @@ export class TransactionService {
     return transaction;
   }
 
-  async findAll() {
-    const rows = await this.prisma.transactions.findMany();
+  async findAll(userId: string) {
+    const rows = await this.prisma.transactions.findMany({
+      where: { user_id: userId },
+    });
     const withLines = await Promise.all(
       rows.map(async (row) => {
         const lines = await this.lineService.findByTransactionId(row.id);
@@ -99,14 +102,16 @@ export class TransactionService {
     return withLines;
   }
 
-  async findOne(id: string) {
-    const row = await this.prisma.transactions.findUnique({ where: { id } });
+  async findOne(id: string, userId: string) {
+    const row = await this.prisma.transactions.findFirst({
+      where: { id, user_id: userId },
+    });
     if (!row) return null;
     const lines = await this.lineService.findByTransactionId(id);
     return { ...row, lines } as any;
   }
 
-  async findRange(lower: number, upper: number) {
+  async findRange(lower: number, upper: number, userId: string) {
     const lo = Math.trunc(Number(lower));
     const hi = Math.trunc(Number(upper));
     if (!Number.isFinite(lo) || !Number.isFinite(hi) || lo < 1 || hi < lo) {
@@ -117,6 +122,7 @@ export class TransactionService {
     const skip = lo - 1;
     const take = hi - lo + 1;
     const rows = await this.prisma.transactions.findMany({
+      where: { user_id: userId },
       orderBy: { date: 'desc' },
       skip,
       take,
@@ -130,15 +136,17 @@ export class TransactionService {
     return withLines;
   }
 
-  async countAll() {
-    const total = await this.prisma.transactions.count();
+  async countAll(userId: string) {
+    const total = await this.prisma.transactions.count({
+      where: { user_id: userId },
+    });
     return { total };
   }
 
-  async update(id: string, dto: UpdateTransactionDto) {
+  async update(id: string, dto: UpdateTransactionDto, userId: string) {
     // Fetch existing to check immutable fields
-    const existing = await this.prisma.transactions.findUnique({
-      where: { id },
+    const existing = await this.prisma.transactions.findFirst({
+      where: { id, user_id: userId },
     });
     if (!existing) throw new BadRequestException('Transaction not found');
 
@@ -243,13 +251,20 @@ export class TransactionService {
     return updated;
   }
 
-  async remove(id: string) {
+  async remove(id: string, userId: string) {
+    const existing = await this.prisma.transactions.findFirst({
+      where: { id, user_id: userId },
+      select: { id: true },
+    });
+    if (!existing) {
+      throw new BadRequestException('Transaction not found');
+    }
     return this.prisma.transactions.delete({ where: { id } });
   }
 
-  async reverseTransaction(id: string) {
-    const original = await this.prisma.transactions.findUnique({
-      where: { id },
+  async reverseTransaction(id: string, userId: string) {
+    const original = await this.prisma.transactions.findFirst({
+      where: { id, user_id: userId },
     });
     if (!original) throw new BadRequestException('Transaction not found');
     if (original.reversed_by || original.reversal_of) {
@@ -259,13 +274,16 @@ export class TransactionService {
     }
 
     // Create a new transaction that reverses the original
-    const reversed = await this.create({
-      kind: 'reversal',
-      description: original.description ?? undefined,
-      tags: (original as any).tags ?? undefined,
-      meta: original.meta as any,
-      reversal_of: id,
-    } as CreateTransactionDto);
+    const reversed = await this.create(
+      {
+        kind: 'reversal',
+        description: original.description ?? undefined,
+        tags: (original as any).tags ?? undefined,
+        meta: original.meta as any,
+        reversal_of: id,
+      } as CreateTransactionDto,
+      userId,
+    );
 
     // Create opposite lines for the reversed transaction
     const origLines = await this.lineService.findByTransactionId(id);

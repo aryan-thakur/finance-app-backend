@@ -27,7 +27,8 @@ export class AccountService {
     );
   }
 
-  async create(dto: CreateAccountDto) {
+  async create(dto: CreateAccountDto, userId: string) {
+    const user_id = userId;
     const {
       institution_id,
       name,
@@ -74,24 +75,31 @@ export class AccountService {
         balance_minor: balance_minor,
         status: this.isBlank(status) ? undefined : (status as string),
         meta: this.isBlank(meta) ? undefined : (meta as any),
+        user_id,
       },
     });
   }
 
-  async findAll() {
-    const rows = await this.prisma.accounts.findMany();
+  async findAll(userId: string) {
+    const rows = await this.prisma.accounts.findMany({
+      where: { user_id: userId },
+    });
     return rows.map(({ number_full, ...rest }) => rest);
   }
 
-  async findOne(id: string) {
-    const row = await this.prisma.accounts.findUnique({ where: { id } });
+  async findOne(id: string, userId: string) {
+    const row = await this.prisma.accounts.findFirst({
+      where: { id, user_id: userId },
+    });
     if (!row) return null;
     const { number_full, ...rest } = row as any;
     return rest;
   }
 
-  async update(id: string, dto: UpdateAccountDto) {
-    const row = await this.prisma.accounts.findUnique({ where: { id } });
+  async update(id: string, dto: UpdateAccountDto, userId: string) {
+    const row = await this.prisma.accounts.findFirst({
+      where: { id, user_id: userId },
+    });
     if (!row) {
       throw new BadRequestException(`Account with id ${id} not found.`);
     }
@@ -118,7 +126,7 @@ export class AccountService {
       dto.balance_minor !== null &&
       Number.isFinite(Number(dto.balance_minor))
     ) {
-      const currentBalance = await this.calculateBalance(id);
+      const currentBalance = await this.calculateBalance(id, userId);
       if (Number(dto.balance_minor) != currentBalance) {
         const delta = Number(dto.balance_minor) - currentBalance;
         if (delta < 0) {
@@ -127,14 +135,14 @@ export class AccountService {
             account_from: id,
             amount_minor: Math.abs(delta),
             description: 'Balance decreased adjustment',
-          });
+          }, userId);
         } else if (delta > 0) {
           await this.transactionService.create({
             kind: 'adjustment',
             account_to: id,
             amount_minor: delta,
             description: 'Balance increased adjustment',
-          });
+          }, userId);
         }
       }
     }
@@ -145,23 +153,30 @@ export class AccountService {
     return this.prisma.accounts.update({ where: { id }, data });
   }
 
-  async remove(id: string) {
+  async remove(id: string, userId: string) {
+    const row = await this.prisma.accounts.findFirst({
+      where: { id, user_id: userId },
+      select: { id: true },
+    });
+    if (!row) {
+      throw new BadRequestException(`Account with id ${id} not found.`);
+    }
     return this.prisma.accounts.delete({ where: { id } });
   }
 
-  async getNumberFull(id: string) {
-    const row = await this.prisma.accounts.findUnique({
-      where: { id },
+  async getNumberFull(id: string, userId: string) {
+    const row = await this.prisma.accounts.findFirst({
+      where: { id, user_id: userId },
       select: { number_full: true },
     });
     return row?.number_full ?? null;
   }
 
-  async calculateBalance(accountId: string): Promise<number> {
-    const account = await this.prisma.accounts.findUnique({
-      where: { id: accountId },
+  async calculateBalance(accountId: string, userId: string): Promise<number> {
+    const account = await this.prisma.accounts.findFirst({
+      where: { id: accountId, user_id: userId },
     });
-    if (!account) throw new Error('Account not found');
+    if (!account) throw new BadRequestException('Account not found');
     const opening = Number(((account as any).balance_minor as bigint) ?? 0n);
     const kind: 'asset' | 'liability' = (account as any).kind;
 
