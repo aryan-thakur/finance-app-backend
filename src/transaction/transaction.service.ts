@@ -1,9 +1,9 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { CreateTransactionDto } from './dto/create-transaction.dto';
-import { UpdateTransactionDto } from './dto/update-transaction.dto';
-import { PrismaService } from 'src/prisma/prisma.service';
-import { LineService } from 'src/line/line.service';
-import { LineDirection } from 'src/line/dto/create-line.dto';
+import { CreateTransactionDto } from './dto/create-transaction.dto.js';
+import { UpdateTransactionDto } from './dto/update-transaction.dto.js';
+import { PrismaService } from '../prisma/prisma.service.js';
+import { LineService } from '../line/line.service.js';
+import { LineDirection } from '../line/dto/create-line.dto.js';
 
 @Injectable()
 export class TransactionService {

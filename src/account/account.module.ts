@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
-import { AccountService } from './account.service';
-import { AccountController } from './account.controller';
-import { AuthModule } from 'src/auth/auth.module';
-import { LineModule } from 'src/line/line.module';
-import { TransactionModule } from 'src/transaction/transaction.module';
+import { AccountService } from './account.service.js';
+import { AccountController } from './account.controller.js';
+import { AuthModule } from '../auth/auth.module.js';
+import { LineModule } from '../line/line.module.js';
+import { TransactionModule } from '../transaction/transaction.module.js';
 
 @Module({
   imports: [AuthModule, LineModule, TransactionModule],

@@ -1,9 +1,9 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { CreateAccountDto } from './dto/create-account.dto';
-import { UpdateAccountDto } from './dto/update-account.dto';
-import { PrismaService } from 'src/prisma/prisma.service';
-import { LineService } from 'src/line/line.service';
-import { TransactionService } from 'src/transaction/transaction.service';
+import { CreateAccountDto } from './dto/create-account.dto.js';
+import { UpdateAccountDto } from './dto/update-account.dto.js';
+import { PrismaService } from '../prisma/prisma.service.js';
+import { LineService } from '../line/line.service.js';
+import { TransactionService } from '../transaction/transaction.service.js';
 
 @Injectable()
 export class AccountService {
@@ -130,19 +130,25 @@ export class AccountService {
       if (Number(dto.balance_minor) != currentBalance) {
         const delta = Number(dto.balance_minor) - currentBalance;
         if (delta < 0) {
-          await this.transactionService.create({
-            kind: 'adjustment',
-            account_from: id,
-            amount_minor: Math.abs(delta),
-            description: 'Balance decreased adjustment',
-          }, userId);
+          await this.transactionService.create(
+            {
+              kind: 'adjustment',
+              account_from: id,
+              amount_minor: Math.abs(delta),
+              description: 'Balance decreased adjustment',
+            },
+            userId,
+          );
         } else if (delta > 0) {
-          await this.transactionService.create({
-            kind: 'adjustment',
-            account_to: id,
-            amount_minor: delta,
-            description: 'Balance increased adjustment',
-          }, userId);
+          await this.transactionService.create(
+            {
+              kind: 'adjustment',
+              account_to: id,
+              amount_minor: delta,
+              description: 'Balance increased adjustment',
+            },
+            userId,
+          );
         }
       }
     }

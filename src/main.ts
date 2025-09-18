@@ -1,8 +1,8 @@
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
+import { AppModule } from './app.module.js';
 import { ValidationPipe } from '@nestjs/common';
-import { PrismaService } from './prisma/prisma.service';
-import { BigIntSerializerInterceptor } from './common/interceptors/bigint-serializer.interceptor';
+import { PrismaService } from './prisma/prisma.service.js';
+import { BigIntSerializerInterceptor } from './common/interceptors/bigint-serializer.interceptor.js';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);

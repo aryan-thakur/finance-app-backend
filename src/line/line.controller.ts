@@ -1,8 +1,17 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
-import { LineService } from './line.service';
-import { CreateLineDto } from './dto/create-line.dto';
-import { UpdateLineDto } from './dto/update-line.dto';
-import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+} from '@nestjs/common';
+import { LineService } from './line.service.js';
+import { CreateLineDto } from './dto/create-line.dto.js';
+import { UpdateLineDto } from './dto/update-line.dto.js';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard.js';
 
 @UseGuards(JwtAuthGuard)
 @Controller('line')

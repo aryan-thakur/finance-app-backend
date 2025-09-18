@@ -13,12 +13,12 @@ import {
   FileTypeValidator,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { InstitutionService } from './institution.service';
-import { InstitutionPostDto } from './dto/institution-post.dto';
-import { UpdateInstitutionDto } from './dto/update-institution.dto';
-import { InstitutionPatchDto } from './dto/insitution-patch.dto';
+import { InstitutionService } from './institution.service.js';
+import { InstitutionPostDto } from './dto/institution-post.dto.js';
+import { UpdateInstitutionDto } from './dto/update-institution.dto.js';
+import { InstitutionPatchDto } from './dto/insitution-patch.dto.js';
 import { UseGuards } from '@nestjs/common';
-import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard.js';
 
 @UseGuards(JwtAuthGuard)
 @Controller('institution')

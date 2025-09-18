@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
-import { LineService } from './line.service';
-import { LineController } from './line.controller';
-import { AuthModule } from 'src/auth/auth.module';
+import { LineService } from './line.service.js';
+import { LineController } from './line.controller.js';
+import { AuthModule } from '../auth/auth.module.js';
 
 @Module({
   imports: [AuthModule],

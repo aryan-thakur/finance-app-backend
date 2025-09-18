@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { randomBytes } from 'crypto';
 import { extname } from 'path';
-import { CreateInstitutionDto } from './dto/create-institution.dto';
-import { UpdateInstitutionDto } from './dto/update-institution.dto';
-import { SupabaseService } from 'src/supabase/supabase.service';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { CreateInstitutionDto } from './dto/create-institution.dto.js';
+import { UpdateInstitutionDto } from './dto/update-institution.dto.js';
+import { SupabaseService } from '../supabase/supabase.service.js';
+import { PrismaService } from '../prisma/prisma.service.js';
 
 @Injectable()
 export class InstitutionService {

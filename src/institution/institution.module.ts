@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
-import { InstitutionService } from './institution.service';
-import { InstitutionController } from './institution.controller';
-import { AuthModule } from 'src/auth/auth.module';
+import { InstitutionService } from './institution.service.js';
+import { InstitutionController } from './institution.controller.js';
+import { AuthModule } from '../auth/auth.module.js';
 @Module({
   imports: [AuthModule],
   controllers: [InstitutionController],

@@ -9,10 +9,10 @@ import {
   Delete,
   UseGuards,
 } from '@nestjs/common';
-import { AccountService } from './account.service';
-import { CreateAccountDto } from './dto/create-account.dto';
-import { UpdateAccountDto } from './dto/update-account.dto';
-import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { AccountService } from './account.service.js';
+import { CreateAccountDto } from './dto/create-account.dto.js';
+import { UpdateAccountDto } from './dto/update-account.dto.js';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard.js';
 
 @UseGuards(JwtAuthGuard)
 @Controller('account')

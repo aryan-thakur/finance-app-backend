@@ -11,10 +11,10 @@ import {
   ParseIntPipe,
   Req,
 } from '@nestjs/common';
-import { TransactionService } from './transaction.service';
-import { CreateTransactionDto } from './dto/create-transaction.dto';
-import { UpdateTransactionDto } from './dto/update-transaction.dto';
-import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { TransactionService } from './transaction.service.js';
+import { CreateTransactionDto } from './dto/create-transaction.dto.js';
+import { UpdateTransactionDto } from './dto/update-transaction.dto.js';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard.js';
 
 @UseGuards(JwtAuthGuard)
 @Controller('transaction')
@@ -23,7 +23,10 @@ export class TransactionController {
 
   @Post()
   create(@Req() req, @Body() createTransactionDto: CreateTransactionDto) {
-    return this.transactionService.create(createTransactionDto, req.user.userId);
+    return this.transactionService.create(
+      createTransactionDto,
+      req.user.userId,
+    );
   }
 
   @Get()
@@ -56,7 +59,11 @@ export class TransactionController {
     @Body() updateTransactionDto: UpdateTransactionDto,
     @Req() req,
   ) {
-    return this.transactionService.update(id, updateTransactionDto, req.user.userId);
+    return this.transactionService.update(
+      id,
+      updateTransactionDto,
+      req.user.userId,
+    );
   }
 
   @Delete(':id')

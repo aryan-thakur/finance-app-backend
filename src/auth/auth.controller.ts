@@ -7,10 +7,11 @@ import {
   UseGuards,
   BadRequestException,
 } from '@nestjs/common';
-import { AuthService } from '../auth/auth.service';
-import { LoginDto } from './dto/login.dto';
-import { JwtAuthGuard } from './jwt-auth.guard';
-import { PrismaService } from 'src/prisma/prisma.service';
+
+import { AuthService } from './auth.service.js';
+import { LoginDto } from './dto/login.dto.js';
+import { JwtAuthGuard } from './jwt-auth.guard.js';
+import { PrismaService } from '../prisma/prisma.service.js';
 
 @Controller('auth')
 export class AuthController {

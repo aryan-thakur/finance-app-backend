@@ -3,8 +3,8 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy as CustomStrategy } from 'passport-custom';
 import type { Request } from 'express';
-import { createRemoteJWKSet, jwtVerify, type JWTPayload } from 'jose';
 import { ConfigService } from '@nestjs/config';
+import { createRemoteJWKSet, jwtVerify, type JWTPayload } from 'jose';
 
 function getBearer(req: Request): string | null {
   const auth = req.headers.authorization;
@@ -34,7 +34,6 @@ export class JwtStrategy extends PassportStrategy(CustomStrategy, 'jwt') {
     }
 
     const jwksUrl = new URL(`${supabaseUrl}/auth/v1/.well-known/jwks.json`);
-
     // jose handles caching + key rotation internally
     this.jwks = createRemoteJWKSet(jwksUrl);
     this.verifyOpts = {
