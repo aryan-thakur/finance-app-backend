@@ -10,7 +10,7 @@ import { JwtModule } from '@nestjs/jwt';
 @Module({
   imports: [
     ConfigModule,
-    PassportModule.register({ defaultStrategy: 'supabase-jwt' }),
+    PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule,
   ],
   providers: [AuthService, JwtStrategy, JwtAuthGuard],
