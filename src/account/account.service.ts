@@ -128,7 +128,9 @@ export class AccountService {
     ) {
       const currentBalance = await this.calculateBalance(id, userId);
       if (Number(dto.balance_minor) != currentBalance) {
-        const delta = Number(dto.balance_minor) - currentBalance;
+        const delta =
+          (Number(dto.balance_minor) - currentBalance) *
+          (dto.kind === 'liability' ? -1 : 1);
         if (delta < 0) {
           await this.transactionService.create(
             {
